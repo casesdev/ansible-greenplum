@@ -5,7 +5,7 @@
 
 - **特别说明：** 此项目目前并不完善，目前仍需要进行完善，个人在仅在 CentOS 8.4 系统上测试成功。请勿再生产环境中使用
 
-- **如何说明：** 
+- **如何使用：** 
 ```bash
 git clone https://github.com/uazwu/ansible-greenplum.git
 cd ansible-greenplum
