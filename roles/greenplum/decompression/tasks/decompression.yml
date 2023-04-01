@@ -1,0 +1,14 @@
+- name: 解压 greenplum 安装包
+  unarchive:
+    src: "/usr/local/greenplum-db-{{ greenplum_version }}.tar.gz"
+    dest: "/usr/local/"
+    remote_src: yes
+
+- name: 设置 greenplum 归属
+  become: yes
+  file:
+    path: /usr/local/greenplum-db-{{ greenplum_version }}
+    owner: gpadmin
+    group: gpadmin
+    recurse: yes
+

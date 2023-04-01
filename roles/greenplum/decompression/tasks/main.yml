@@ -1,0 +1,2 @@
+- name: 解压
+  include_tasks: decompression.yml

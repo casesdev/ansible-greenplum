@@ -1,0 +1,5 @@
+- name: 下载安装包
+  include_tasks: distribute.yml
+
+- name: 安装
+  include_tasks: 02_install.yml

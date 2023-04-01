@@ -1,0 +1,71 @@
+---
+#-------------------------------------------------------------------------------------------------------------#
+#----------------------------------------------- Ansible 变量 ------------------------------------------------#
+#-------------------------------------------------------------------------------------------------------------#
+# 提权操作
+ansible_become: true
+# 忽略警告
+command_warnings: false
+
+#-------------------------------------------------------------------------------------------------------------#
+#-------------------------------------------- 基础参数（内置，不可改变） -----------------------------------------#
+#-------------------------------------------------------------------------------------------------------------#
+# 当前节点 cpu 架构
+_host_architecture_groups:
+  x86_64: amd64
+  aarch64: arm64
+  armv7l: arm
+host_architecture: >-
+  {%- if ansible_architecture in _host_architecture_groups -%}
+  {{ _host_architecture_groups[ansible_architecture] }}
+  {%- else -%}
+  {{ ansible_architecture }}
+  {%- endif -%}
+
+# 当前节点系统类型
+_host_distribution_groups:
+  uos: debian
+host_distribution: >-
+  {%- if ansible_distribution in _host_distribution_groups -%}
+  {{ _host_distribution_groups[ansible_distribution] }}
+  {%- else -%}
+  {{ ansible_distribution }}
+  {%- endif -%}
+
+# 当前节点系统版本
+host_distribution_release: >-
+  {%- if (ansible_distribution_release == 'n/a')
+  or (ansible_distribution_release is not defined)
+  or (ansible_distribution_release == '') -%}
+  buster
+  {%- else -%}
+  {{ ansible_distribution_release }}
+  {%- endif -%}
+
+# 当前节点 ip
+current_host_ip: >-
+  {%- if hostvars[inventory_hostname]['ansible_host'] is defined -%}
+  {{ hostvars[inventory_hostname]['ansible_host'] }}
+  {%- else -%}
+  {{ inventory_hostname }}
+  {%- endif -%}
+
+#--------------------------------------------------------------------------------------------------------#
+#----------------------------------------------- 基础参数 ------------------------------------------------#
+#--------------------------------------------------------------------------------------------------------#
+# 是否跳过节点资源校验
+skip_verify_node: false
+
+# 节点时区
+timezone: Asia/Shanghai
+
+# 禁用防火墙
+firewalld_disabled: true
+
+# # 自定义hosts记录
+# # 举例：
+# custom_hosts:
+#   "127.0.0.1":
+#   - "one.domain.custom.local"
+#   - "tow.domain.custom.local"
+custom_hosts: {}

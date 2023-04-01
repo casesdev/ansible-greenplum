@@ -1,0 +1,2 @@
+- name: 分发 greenplum 到各节点
+  include_tasks: distribute.yml

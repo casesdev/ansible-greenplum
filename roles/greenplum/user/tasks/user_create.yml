@@ -1,0 +1,14 @@
+- block:
+    - name: 创建用户
+      user:
+        name: "{{ greenplum_username }}"
+        password: "{{ greenplum_password }}"
+        shell: /bin/bash
+        createhome: yes
+        state: present
+    - name: 添加用户到 sudoers 文件
+      lineinfile:
+        dest: /etc/sudoers
+        line: "{{ greenplum_username }} ALL=(ALL) ALL"
+        state: present
+        validate: /usr/sbin/visudo -cf %s

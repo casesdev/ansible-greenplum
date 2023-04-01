@@ -1,0 +1,53 @@
+# 校验节点软件系统及硬件系统、安装必要基础组件、docker、kubeadm、kubelet、kubectl
+- hosts:
+  - all
+  gather_facts: false
+  tasks:
+    - name: "设置代理服务器环境变量"
+      set_fact:
+        proxy_env:
+          http_proxy: "{{ http_proxy | default ('') }}"
+          HTTP_PROXY: "{{ http_proxy | default ('') }}"
+          https_proxy: "{{ https_proxy | default ('') }}"
+          HTTPS_PROXY: "{{ https_proxy | default ('') }}"
+          no_proxy: "{{ no_proxy | default ('') }}"
+          NO_PROXY: "{{ no_proxy | default ('') }}"
+      no_log: true
+
+- hosts:
+  - all
+  roles:
+  - greenplum/variables
+  - greenplum/base
+  - greenplum/user
+
+- hosts:
+    - greenplum-master
+  roles:
+    - greenplum/master-directory
+    - greenplum/install
+
+- hosts:
+    - all
+  roles:
+    - greenplum/directory
+
+- hosts:
+    - greenplum-master
+  roles:
+    - greenplum/distribute
+
+- hosts:
+    - all:!greenplum-master
+  roles:
+    - greenplum/decompression
+
+- hosts:
+    - all
+  roles:
+    - greenplum/profile
+
+- hosts:
+    - greenplum-master
+  roles:
+    - greenplum/init-cluster

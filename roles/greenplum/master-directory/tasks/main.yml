@@ -1,0 +1,2 @@
+- name: 创建 master 数据目录
+  include_tasks: master-directory.yml

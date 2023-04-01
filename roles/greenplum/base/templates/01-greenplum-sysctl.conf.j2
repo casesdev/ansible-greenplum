@@ -1,0 +1,36 @@
+# 最大限度使用物理内存
+vm.swappiness = 0
+
+# 该参数定义了共享内存段的最大尺寸
+kernel.shmmni = 4096
+
+# 当 overcomit_memory= 2时，该参数有效，这个参数决定了系统可用内存的大小
+vm.overcommit_ratio = 95
+
+# 4个数据分别对应
+# SEMMSL    SEMMNS    SEMOPM   SEMMNI
+# 500       SEMMSL    max      semaphores per array     信号集容纳最大信号数量
+# 2048000   SEMMNS    max      semaphores system wide   所有信号的最大数量
+# 200       SEMOPM    max      ops per semop call       调用单个信号集中最大信号数量
+# 4096      SEMMNI    max      number of arrays         信号集的最大值
+kernel.sem = 500 2048000 200 4096
+
+# 启用了系统请求键（SysRq）功能。SysRq键是一种特殊的键，通常位于键盘的顶部或右侧，用于在Linux系统中发送一些紧急命令，以便在系统崩溃或无法响应时进行故障排除。启用kernel.sysrq参数后，用户可以使用SysRq键来执行一些紧急操作，如强制重新启动系统、强制进程退出、同步磁盘缓存等
+kernel.sysrq = 1
+
+# 设置为1，则生成的core dump文件将包括进程ID作为文件名的一部分，例如core.PID。如果设置为0，则生成的core dump文件将命名为core。默认情况下，该参数的值为0
+kernel.core_uses_pid = 1
+
+kernel.msgmnb = 65536
+kernel.msgmax = 65536
+kernel.msgmni = 2048
+net.ipv4.tcp_syncookies = 1
+net.ipv4.conf.default.accept_source_route = 0
+net.ipv4.tcp_max_syn_backlog = 4096
+net.ipv4.conf.all.arp_filter = 1
+net.core.netdev_max_backlog = 10000
+net.core.rmem_max = 4194304
+net.core.wmem_max = 2097152
+vm.zone_reclaim_mode = 0
+vm.dirty_expire_centisecs = 500
+vm.dirty_writeback_centisecs = 100

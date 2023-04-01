@@ -1,0 +1,106 @@
+- name: 安装 greenplum rpm
+  yum:
+    name: /tmp/open-source-greenplum-db-6.23.4-el8-x86_64.rpm
+    state: present
+
+- name: 配置 all_host
+  template:
+    src: all_host.j2
+    dest: /usr/local/greenplum-db/all_host
+
+- name: 配置 seg_host
+  template:
+    src: seg_host.j2
+    dest: /usr/local/greenplum-db/seg_host
+
+- name: 将 /usr/local/greenplum-db* 授权给安装用户
+  file:
+    path: /usr/local/greenplum-db*
+    owner: "{{ greenplum_username }}"
+    group: "{{ greenplum_username }}"
+    recurse: yes
+
+- name: 执行source /usr/local/greenplum-db/greenplum_path.sh 设置 gp 环境变量
+  become: yes
+  become_user: "{{ greenplum_username }}"
+  shell: |
+    source /usr/local/greenplum-db/greenplum_path.sh
+
+- name: 执行 gpssh-exkeys 交换 ssh key
+  become: yes
+  become_user: "{{ greenplum_username }}"
+  shell: gpssh-exkeys -f /usr/local/greenplum-db/all_host
+
+- block:
+  - name: 设置 .bash_profile -> /usr/local/greenplum-db/greenplum_path.sh
+    become: yes
+    become_user: "{{ greenplum_username }}"
+    lineinfile:
+      create: yes
+      path: "~{{ greenplum_username }}/.bash_profile"
+      line: 'source /usr/local/greenplum-db/greenplum_path.sh'
+
+  - name: 设置 .bash_profile -> gp seg dir
+    become: yes
+    become_user: "{{ greenplum_username }}"
+    lineinfile:
+      path: "~{{ greenplum_username }}/.bash_profile"
+      line: 'export MASTER_DATA_DIRECTORY=/data/bs/greenplum/data/master/gpseg-1'
+
+  - name: 设置 .bash_profile -> greenplum 端口
+    become: yes
+    become_user: "{{ greenplum_username }}"
+    lineinfile:
+      path: "~{{ greenplum_username }}/.bash_profile"
+      line: 'export PGPORT=15039'
+
+  - name: 设置 .bash_profile -> greenplum 用户名
+    become: yes
+    become_user: "{{ greenplum_username }}"
+    lineinfile:
+      path: "~{{ greenplum_username }}/.bash_profile"
+      line: 'export PGUSER={{ greenplum_username }}'
+
+  - name: 设置 .bash_profile -> greenplum 数据库
+    become: yes
+    become_user: "{{ greenplum_username }}"
+    lineinfile:
+      path: "~{{ greenplum_username }}/.bash_profile"
+      line: 'export PGDATABASE=bs_prd'
+
+- block:
+  - name: 设置 .bashrc -> /usr/local/greenplum-db/greenplum_path.sh
+    become: yes
+    become_user: "{{ greenplum_username }}"
+    lineinfile:
+      create: yes
+      path: "~{{ greenplum_username }}/.bashrc"
+      line: 'source /usr/local/greenplum-db/greenplum_path.sh'
+
+  - name: 设置 .bashrc -> gp seg dir
+    become: yes
+    become_user: "{{ greenplum_username }}"
+    lineinfile:
+      path: "~{{ greenplum_username }}/.bashrc"
+      line: 'export MASTER_DATA_DIRECTORY=/data/bs/greenplum/data/master/gpseg-1'
+
+  - name: 设置 .bashrc -> greenplum 端口
+    become: yes
+    become_user: "{{ greenplum_username }}"
+    lineinfile:
+      path: "~{{ greenplum_username }}/.bashrc"
+      line: 'export PGPORT=15039'
+
+  - name: 设置 .bashrc -> greenplum 用户名
+    become: yes
+    become_user: "{{ greenplum_username }}"
+    lineinfile:
+      path: "~{{ greenplum_username }}/.bashrc"
+      line: 'export PGUSER={{ greenplum_username }}'
+
+  - name: 设置 .bashrc -> greenplum 数据库
+    become: yes
+    become_user: "{{ greenplum_username }}"
+    lineinfile:
+      path: "~{{ greenplum_username }}/.bashrc"
+      line: 'export PGDATABASE=bs_prd'

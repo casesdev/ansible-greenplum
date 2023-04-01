@@ -1,0 +1,164 @@
+- block:
+  - name: 判断 firewalld 是否安装
+    shell: >
+      systemctl is-active firewalld || echo "not be found"
+    register: firewalld_already_installed
+
+  - name: 禁用防火墙
+    service:
+      name: firewalld
+      state: stopped
+      enabled: no
+    when: firewalld_already_installed.stdout == "active"
+  when: "(firewalld_disabled | bool) | default(true)"
+
+- name: 临时关闭 selinux
+  shell: "setenforce 0"
+  failed_when: false
+
+- name: 永久关闭 selinux
+  lineinfile:
+    dest: /etc/selinux/config
+    regexp: "^SELINUX="
+    line: "SELINUX=disabled"
+
+
+
+
+- name: 获得 /usr/local 所在磁盘
+  shell: df -P /usr/local | awk 'NR==2{print $1}'
+  register: device_name
+
+- name: 设置磁盘I/O调度算法为 deadline
+  blockinfile:
+    path: /etc/udev/rules.d/60-scheduler.rules
+    block: |
+      # Set I/O scheduler for {{ device_name.stdout }} to deadline
+      ACTION=="add|change", KERNEL=="{{ device_name.stdout }}", ATTR{queue/scheduler}="deadline"
+    insertafter: "# Set read_ahead_kb to 256 for all devices"
+    state: present
+    create: true
+
+- name: 应用 设置磁盘I/O调度算法为 deadline
+  shell: udevadm control --reload-rules && udevadm trigger --subsystem-match=block
+  changed_when: false
+
+
+## - block:
+##   - name: 获得 /usr/local 所在磁盘
+##     shell: df -T /usr/local | awk 'NR==2{print $1}'
+##     register: device_name
+
+##   - name: 获得磁盘名
+##     shell: ls -l /dev/disk/by-id/ | grep -i '{{ device_name.stdout.split(\"/\")[-1] }}' | awk '{print $NF}'
+##     register: actual_device_name
+
+##   - name: 临时设置磁盘I/O调度算法为 deadline
+##     command: "echo deadline > /sys/block/{{ actual_device_name.stdout }}/queue/scheduler"
+
+## - name: 永久设置磁盘I/O调度算法为 deadline
+##   lineinfile:
+##     path: /etc/default/grub
+##     regexp: '^GRUB_CMDLINE_LINUX_DEFAULT='
+##     line: 'GRUB_CMDLINE_LINUX_DEFAULT="quiet splash elevator=deadline"'
+##   notify: Update-grub
+
+## - name: Update-grub
+##   shell: update-grub
+
+## - block:
+##   - name: 判断透明大页状态
+##     shell: cat /sys/kernel/mm/transparent_hugepage/enabled
+##     register: thp_status
+
+##   - name: 关闭透明大页状态
+##     shell: echo never > /sys/kernel/mm/transparent_hugepage/enabled
+##     when: thp_status.stdout != "never"
+
+
+- block:
+  - name: 创建关闭大页状态的脚本 /etc/profile.d/disable-thp.sh
+    copy:
+      content: |
+        # Disable Transparent Huge Pages (THP)
+        if test -f /sys/kernel/mm/transparent_hugepage/enabled; then
+            echo never > /sys/kernel/mm/transparent_hugepage/enabled
+        fi
+        if test -f /sys/kernel/mm/transparent_hugepage/defrag; then
+            echo never > /sys/kernel/mm/transparent_hugepage/defrag
+        fi
+      dest: /etc/profile.d/disable-thp.sh
+      mode: 0755
+
+  - name: 将 关闭大页状态的脚本 加入到启动脚本 /etc/rc.d/rc.local 中
+    lineinfile:
+      path: /etc/rc.d/rc.local
+      regexp: '^/etc/profile.d/disable-thp.sh'
+      line: '/etc/profile.d/disable-thp.sh || true'
+      state: present
+
+  - name: 将 /etc/rc.d/rc.local 添加可执行权限
+    file:
+      path: /etc/rc.d/rc.local
+      mode: '0755'
+
+  - name: 执行一次关闭大页状态的脚本，使生效
+    shell: /etc/profile.d/disable-thp.sh
+
+
+- name: 设置 RemoveIPC=no
+  lineinfile:
+    path: /etc/systemd/logind.conf
+    regexp: "^#?RemoveIPC="
+    line: "RemoveIPC=no"
+    state: present
+
+- name: Reload systemd daemon
+  systemd:
+    daemon_reload: yes
+
+- name: 重启 systemd-logind 服务
+  systemd:
+    name: systemd-logind.service
+    state: restarted
+
+- name: 设置SSH连接阈值
+  lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+  with_items:
+    - { regexp: '^#?MaxStartups', line: 'MaxStartups 10:30:60' }
+    - { regexp: '^#?MaxSessions', line: 'MaxSessions 200' }
+
+- name: 安装 chrony 包
+  yum:
+    name: chrony
+    state: present
+
+
+- name: 配置 chrony 时间服务器
+  lineinfile:
+    path: /etc/chrony.conf
+    regexp: '^server'
+    line: 'server {{ item }} iburst'
+  with_items:
+    - "{{ chrony_servers }}"
+  notify: restart-chronyd
+
+- name: restart chronyd
+  systemd:
+    name: chronyd
+    state: restarted
+
+
+
+
+
+
+
+
+
+
+
+

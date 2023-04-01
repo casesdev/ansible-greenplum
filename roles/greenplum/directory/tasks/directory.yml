@@ -1,0 +1,25 @@
+- name: 创建数据目录
+  become: yes
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ greenplum_username }}"
+    group: "{{ greenplum_username }}"
+  with_items:
+    - /data/bs/greenplum/data1/primary
+    - /data/bs/greenplum/data1/mirror
+    - /data/bs/greenplum/data2/primary
+    - /data/bs/greenplum/data2/mirror
+    - /data/bs/greenplum/data3/primary
+    - /data/bs/greenplum/data3/mirror
+    - /data/bs/greenplum/data4/primary
+    - /data/bs/greenplum/data4/mirror
+
+- name: 授权给gp用户
+  become: yes
+  file:
+    path: /data/bs
+    recurse: yes
+    owner: gpadmin
+    group: gpadmin
+

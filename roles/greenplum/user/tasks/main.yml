@@ -1,0 +1,7 @@
+# 创建用户
+- name: 创建用户
+  include_tasks: user_create.yml
+
+# 互访
+- name: 互访认证
+  include_tasks: id_trust.yml

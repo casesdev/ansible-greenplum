@@ -1,0 +1,4 @@
+- name: 下载 greenplum-db
+  get_url:
+    url: "{{ greenplum_download_url }}"
+    dest: "/tmp/open-source-greenplum-db-{{ greenplum_version }}-el8-x86_64.rpm"

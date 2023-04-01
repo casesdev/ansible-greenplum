@@ -1,0 +1,38 @@
+- name: 创建 /home/gpadmin/gpconfigs 并授权给gp用户
+  become: yes
+  file:
+    path: "~{{ greenplum_username }}/gpconfigs"
+    state: directory
+    owner: "{{ greenplum_username }}"
+    group: "{{ greenplum_username }}"
+
+- name: 拷贝 gpinitsystem_config 文件
+  become: yes
+  copy:
+    src: "/usr/local/greenplum-db/docs/cli_help/gpconfigs/gpinitsystem_config"
+    dest: "~{{ greenplum_username }}/gpconfigs/gpinitsystem_config"
+    owner: "{{ greenplum_username }}"
+    group: "{{ greenplum_username }}"
+
+- name: 在主节点运行命令进行初始化
+  become: yes
+  become_user: "{{ greenplum_username }}"
+  shell: "gpinitsystem -c ~{{ greenplum_username }}/gpconfigs/gpinitsystem_config -h /usr/local/greenplum-db/seg_host -D"
+
+- name: 设置 gpadmin 的密码
+  become: yes
+  become_user: "{{ greenplum_username }}"
+  shell: "psql -c \"ALTER USER gpadmin WITH PASSWORD '{{ greenplum_password }}'\""
+
+- name: 配置远程登陆
+  become: yes
+  become_user: "{{ greenplum_username }}"
+  lineinfile:
+    path: /data/bs/greenplum/data/master/gpseg-1/pg_hba.conf
+    line: "host     all         {{ greenplum_username }}         0.0.0.0/0       md5"
+    state: present
+
+- name: 加载修改的配置
+  become: yes
+  become_user: "{{ greenplum_username }}"
+  shell: "gpstop -u"

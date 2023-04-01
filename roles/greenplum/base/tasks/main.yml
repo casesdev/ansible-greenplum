@@ -1,0 +1,20 @@
+# 参数校验
+- name: 校验参数
+  include_tasks: 02_verify_variables.yml
+
+# 预检文件系统是否满足要求
+- name: 校验节点资源配置
+  include_tasks: 03_01_verify_fs.yml
+
+# 预检内存是否满足要求
+- name: 校验节点资源配置
+  include_tasks: 03_02_verify_node.yml
+  when: not ( skip_verify_node | bool )
+
+# 操作系统通用配置
+- name: 操作系统通用配置
+  include_tasks: 04_common.yml
+  when: not ( skip_verify_node | bool )
+
+- include_tasks: 05_centos.yml
+  when: ansible_distribution is regex ("CentOS.*")

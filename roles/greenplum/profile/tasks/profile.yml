@@ -1,0 +1,73 @@
+- block:
+  - name: 设置 .bash_profile -> /usr/local/greenplum-db/greenplum_path.sh
+    become: yes
+    become_user: "{{ greenplum_username }}"
+    lineinfile:
+      create: yes
+      path: "~{{ greenplum_username }}/.bash_profile"
+      line: 'source /usr/local/greenplum-db/greenplum_path.sh'
+
+  - name: 设置 .bash_profile -> gp seg dir
+    become: yes
+    become_user: "{{ greenplum_username }}"
+    lineinfile:
+      path: "~{{ greenplum_username }}/.bash_profile"
+      line: 'export MASTER_DATA_DIRECTORY=/data/bs/greenplum/data/master/gpseg-1'
+
+  - name: 设置 .bash_profile -> greenplum 端口
+    become: yes
+    become_user: "{{ greenplum_username }}"
+    lineinfile:
+      path: "~{{ greenplum_username }}/.bash_profile"
+      line: 'export PGPORT=15039'
+
+  - name: 设置 .bash_profile -> greenplum 用户名
+    become: yes
+    become_user: "{{ greenplum_username }}"
+    lineinfile:
+      path: "~{{ greenplum_username }}/.bash_profile"
+      line: 'export PGUSER={{ greenplum_username }}'
+
+  - name: 设置 .bash_profile -> greenplum 数据库
+    become: yes
+    become_user: "{{ greenplum_username }}"
+    lineinfile:
+      path: "~{{ greenplum_username }}/.bash_profile"
+      line: 'export PGDATABASE=bs_prd'
+
+- block:
+  - name: 设置 .bashrc -> /usr/local/greenplum-db/greenplum_path.sh
+    become: yes
+    become_user: "{{ greenplum_username }}"
+    lineinfile:
+      create: yes
+      path: "~{{ greenplum_username }}/.bashrc"
+      line: 'source /usr/local/greenplum-db/greenplum_path.sh'
+
+  - name: 设置 .bashrc -> gp seg dir
+    become: yes
+    become_user: "{{ greenplum_username }}"
+    lineinfile:
+      path: "~{{ greenplum_username }}/.bashrc"
+      line: 'export MASTER_DATA_DIRECTORY=/data/bs/greenplum/data/master/gpseg-1'
+
+  - name: 设置 .bashrc -> greenplum 端口
+    become: yes
+    become_user: "{{ greenplum_username }}"
+    lineinfile:
+      path: "~{{ greenplum_username }}/.bashrc"
+      line: 'export PGPORT=15039'
+
+  - name: 设置 .bashrc -> greenplum 用户名
+    become: yes
+    become_user: "{{ greenplum_username }}"
+    lineinfile:
+      path: "~{{ greenplum_username }}/.bashrc"
+      line: 'export PGUSER={{ greenplum_username }}'
+
+  - name: 设置 .bashrc -> greenplum 数据库
+    become: yes
+    become_user: "{{ greenplum_username }}"
+    lineinfile:
+      path: "~{{ greenplum_username }}/.bashrc"
+      line: 'export PGDATABASE=bs_prd'

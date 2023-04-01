@@ -1,0 +1,10 @@
+- name: 打包 greenplum 安装文件夹
+  archive:
+    path: "/usr/local/greenplum-db-{{ greenplum_version }}"
+    dest: "/usr/local/greenplum-db-{{ greenplum_version }}.tar.gz"
+    format: tar.gz
+
+- name: 分发 greenplum 到各节点
+  ansible.builtin.command: "scp /usr/local/greenplum-db-{{ greenplum_version }}.tar.gz user@{{ item }}:/usr/local/"
+  loop: "{{ groups['all'] | difference([inventory_hostname]) }}"
+  when: inventory_hostname != item

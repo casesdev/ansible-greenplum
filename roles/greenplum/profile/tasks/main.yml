@@ -1,0 +1,2 @@
+- name: 环境变量
+  include_tasks: profile.yml

@@ -1,0 +1,82 @@
+- name: "统一时区为 {{ timezone }}"
+  timezone:
+    name: "{{ timezone }}"
+
+- name: 禁用系统 swap
+  shell: "swapoff -a && sysctl -w vm.swappiness=0"
+  ignore_errors: true
+
+- name: 设置系统参数
+  template:
+    src: 01-greenplum-sysctl.conf.j2
+    dest: /etc/sysctl.d/01-greenplum-sysctl.conf
+
+- name: 生效系统参数
+  shell: "sysctl -p /etc/sysctl.d/01-greenplum-sysctl.conf"
+  ignore_errors: true
+
+- name: 添加集群节点 hostname 信息到 hosts 文件中
+  blockinfile:
+    path: /etc/hosts
+    block: |-
+      {% for item in (groups['all']|unique) -%}
+      {% if hostvars[item]['ansible_host'] is defined -%}
+      {{ hostvars[item]['ansible_host'] }} {{ hostvars[item]['inventory_hostname'] }} {{ hostvars[item]['inventory_hostname'] }}.{{ kube_dns_domain }}
+      {% endif %}
+      {% endfor %}
+      {% for custom_hosts_ip, custom_hosts_addr in custom_hosts.items() %}
+      {{ custom_hosts_ip }} {{ ([ custom_hosts_addr ] | flatten ) | join(' ') }}
+      {% endfor %}
+    state: present
+    create: yes
+    backup: yes
+    marker: "# Ansible inventory hosts {mark}"
+
+- name: 确认 hosts 文件中 localhost ipv4 配置正确
+  lineinfile:
+    dest: /etc/hosts
+    line: "127.0.0.1 localhost localhost.localdomain"
+    regexp: '^127.0.0.1.*$'
+    state: present
+
+- name: 确认 hosts 文件中 localhost ipv6 配置正确
+  lineinfile:
+    dest: /etc/hosts
+    line: "::1 localhost6 localhost6.localdomain"
+    regexp: '^::1.*$'
+    state: present
+
+- name: 创建 systemd 配置目录
+  file:
+    name: /etc/systemd/system.conf.d
+    state: directory
+
+- name: 设置系统 ulimits
+  template:
+    src: 02-greenplum-ulimits.conf.j2
+    dest: /etc/systemd/system.conf.d/02-greenplum-ulimits.conf
+
+- block:
+    - name: 检查当前 locale 是否为 en_US.UTF-8
+      shell: locale
+      register: locale_output
+    - name: 将 local 设置为 en_US.UTF-8
+      shell: |
+        sudo locale-gen en_US.UTF-8
+        sudo update-locale LANG=en_US.UTF-8
+      when: "'en_US.UTF-8' not in locale_output.stdout"
+
+- block:
+    - name: 创建用户
+      user:
+        name: "{{ greenplum_username }}"
+        password: "{{ greenplum_password }}"
+        shell: /bin/bash
+        createhome: yes
+        state: present
+    - name: 添加用户到 sudoers 文件
+      lineinfile:
+        dest: /etc/sudoers
+        line: "{{ greenplum_username }} ALL=(ALL) ALL"
+        state: present
+        validate: /usr/sbin/visudo -cf %s

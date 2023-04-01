@@ -1,0 +1,10 @@
+# 校验节点 /usr/local 所在磁盘文件系统
+- name: 获取 /usr/local 所在磁盘文件系统
+  shell: df -T /usr/local | awk 'NR==2{print $2}'
+  register: fs_type
+
+- name: 检验 /usr/local 所在磁盘文件系统是否为 xfs
+  assert:
+    that:
+      - fs_type.stdout == 'xfs'
+    fail_msg: "greenplum 所支持的文件系统仅可为 xfs, 请先将 /usr/local 所在磁盘变更为 xfs 重新进行操作"
